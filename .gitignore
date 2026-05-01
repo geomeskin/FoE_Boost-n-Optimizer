@@ -1,0 +1,10 @@
+# City export files — personal data, updated weekly
+data/input/Full*Export*.json
+
+# Generated pipeline output — rebuilt on every run
+data/output/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
