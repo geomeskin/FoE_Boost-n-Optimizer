@@ -1,0 +1,93 @@
+Got it — you’re basically at the “wrap it up cleanly” point anyway.
+Here’s the important state of things so you don’t lose context:
+
+🧠 Where you are (final status)
+You now have a working FoE pipeline:
+✅ Stage 1: Extract
+
+
+2693 buildings loaded
+
+
+city_entities.json generated
+
+
+✅ Stage 2: Abilities
+
+
+5009 abilities classified
+
+
+split into combat/placement/production/etc.
+
+
+✅ Stage 3: Boosts
+
+
+171 combat records expanded
+
+
+2276 boost rows generated
+
+
+foe_boost_table.csv produced
+
+
+
+🧱 What this means in plain terms
+You now have a rebuildable analytics engine:
+
+Raw game export → structured dataset → usable boost intelligence
+
+And critically:
+
+
+one command regenerates everything
+
+
+no more script sprawl confusion
+
+
+pipeline is now stable and repeatable
+
+
+
+🚀 What you can do next (when you come back)
+When you’re ready again, the next meaningful upgrade is:
+🏆 Rankings / Meta Engine
+Turns your data into decisions like:
+
+
+best buildings per tile
+
+
+S/A/B tier classification
+
+
+mode-based optimization (GE, GBG, etc.)
+
+
+
+💾 Safe stopping point
+You are at a clean checkpoint.
+You can safely stop here and:
+
+
+come back later
+
+
+rerun run_pipeline.py all
+
+
+regenerate everything from raw export
+
+
+
+👍 One-line summary
+You didn’t just “fix scripts” — you built a reproducible FoE data pipeline that works end-to-end.
+
+When you’re back, just say:
+
+“continue rankings engine”
+
+and we’ll pick up exactly where the value jumps again.
