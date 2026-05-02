@@ -543,8 +543,7 @@ _m.run()
 
     // Read generated report from virtual FS
     const reportHtml = await pyodide.runPythonAsync(`
-with open(str(config.OUTPUT_DIR / 'report.html'), encoding='utf-8') as _f:
-    _f.read()
+open(str(config.OUTPUT_DIR / 'report.html'), encoding='utf-8').read()
 `);
 
     showReport(reportHtml, cityName);
