@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FoE Boost-n-Optimizer</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: system-ui, sans-serif;
+  background: #f4f6f8;
+  color: #1a1a2e;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  background: #1a1a2e;
+  color: #fff;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+header h1 { font-size: 1.2rem; font-weight: 700; }
+header .sub { font-size: .8rem; opacity: .6; }
+
+/* ---- Screens ---- */
+.screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+.screen.active { display: flex; }
+
+/* ---- Upload screen ---- */
+#screen-upload {
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.1);
+  padding: 40px;
+  max-width: 560px;
+  width: 100%;
+}
+.card h2 { font-size: 1.4rem; margin-bottom: 8px; }
+.card .subtitle {
+  color: #666;
+  margin-bottom: 28px;
+  font-size: .9rem;
+  line-height: 1.6;
+}
+
+.drop-zone {
+  border: 2px dashed #c0c8d4;
+  border-radius: 8px;
+  padding: 36px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  margin-bottom: 20px;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: #4a6fa5;
+  background: #f0f4ff;
+}
+.drop-zone input[type=file] { display: none; }
+.drop-zone label { cursor: pointer; color: #555; line-height: 2.2; display: block; }
+.drop-zone label strong { color: #4a6fa5; }
+.drop-zone .hint { font-size: .78rem; color: #999; margin-top: 4px; }
+
+.file-selected {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f0f4ff;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+.file-selected .fname {
+  flex: 1;
+  font-size: .88rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.btn-clear {
+  background: none;
+  border: 1px solid #c0c8d4;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: .85rem;
+  cursor: pointer;
+  color: #888;
+  flex-shrink: 0;
+}
+.btn-clear:hover { background: #eef0f3; }
+
+.btn-primary {
+  width: 100%;
+  background: #1a1a2e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 13px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s;
+}
+.btn-primary:hover:not(:disabled) { background: #2d3a5c; }
+.btn-primary:disabled { background: #aaa; cursor: not-allowed; }
+
+.engine-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+  font-size: .8rem;
+  color: #aaa;
+}
+.spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid #ddd;
+  border-top-color: #4a6fa5;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.engine-status.ready { color: #2e7d32; }
+.engine-status.ready .spinner { display: none; }
+.engine-status.error { color: #c62828; }
+.engine-status.error .spinner { border-top-color: #c62828; }
+
+/* ---- Progress screen ---- */
+#screen-progress {
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+.progress-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.1);
+  padding: 32px;
+  max-width: 620px;
+  width: 100%;
+}
+.progress-card h2 { font-size: 1.2rem; margin-bottom: 24px; }
+
+.stages { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+.stage-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: .88rem;
+  color: #aaa;
+  transition: background .2s, color .2s;
+}
+.stage-item.active { color: #1a1a2e; background: #f0f4ff; font-weight: 600; }
+.stage-item.done { color: #2e7d32; }
+.stage-icon { width: 18px; text-align: center; font-size: .9rem; flex-shrink: 0; }
+
+.log-box {
+  background: #1a1a2e;
+  color: #a8c6a8;
+  border-radius: 6px;
+  padding: 14px;
+  font-family: monospace;
+  font-size: .78rem;
+  max-height: 220px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.error-banner {
+  display: none;
+  margin-top: 16px;
+  background: #ffeaea;
+  border: 1px solid #ffb3b3;
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: .88rem;
+  color: #c62828;
+}
+.btn-retry {
+  display: none;
+  margin-top: 16px;
+  background: none;
+  border: 1px solid #c0c8d4;
+  border-radius: 6px;
+  padding: 9px 20px;
+  font-size: .88rem;
+  cursor: pointer;
+  color: #555;
+}
+.btn-retry:hover { background: #f4f6f8; }
+
+/* ---- Report screen ---- */
+#screen-report { overflow: hidden; }
+.report-bar {
+  background: #fff;
+  border-bottom: 1px solid #dde1e7;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+.btn-back {
+  background: none;
+  border: 1px solid #c0c8d4;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: .85rem;
+  cursor: pointer;
+  color: #555;
+}
+.btn-back:hover { background: #f4f6f8; }
+.report-city-label { flex: 1; font-weight: 600; font-size: .9rem; }
+.btn-download {
+  background: #2e7d32;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+.btn-download:hover { background: #1b5e20; }
+
+#report-iframe {
+  flex: 1;
+  border: none;
+  min-height: 0;
+  width: 100%;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>FoE Boost-n-Optimizer</h1>
+  <span class="sub">Building Rankings &amp; Mode Analysis</span>
+</header>
+
+<!-- Upload screen -->
+<div id="screen-upload" class="screen active">
+  <div class="card">
+    <h2>Analyze Your City</h2>
+    <p class="subtitle">
+      Export your city from FoE Helper (City Plan → Export to Clipboard), save it as a .json file,
+      then upload it here to get your full ranked building report — runs entirely in your browser,
+      nothing is uploaded to any server.
+    </p>
+
+    <div id="drop-zone" class="drop-zone">
+      <input type="file" id="file-input" accept=".json">
+      <label for="file-input">
+        <div style="font-size:2rem; margin-bottom:6px;">📂</div>
+        <div>Drop your city export here or <strong>click to browse</strong></div>
+        <div class="hint">FoE Helper → City Plan → Export to Clipboard → save as .json (~37 MB)</div>
+      </label>
+    </div>
+
+    <div id="file-selected" class="file-selected" style="display:none">
+      <span class="fname" id="file-name"></span>
+      <button class="btn-clear" id="clear-btn" title="Remove file">✕</button>
+    </div>
+
+    <button class="btn-primary" id="analyze-btn" disabled>Analyze City</button>
+
+    <div class="engine-status" id="engine-status">
+      <div class="spinner"></div>
+      <span id="status-text">Loading Python engine (first visit ~10 MB download, then cached)…</span>
+    </div>
+  </div>
+</div>
+
+<!-- Progress screen -->
+<div id="screen-progress" class="screen">
+  <div class="progress-card">
+    <h2>Analyzing <span id="progress-city-name"></span>…</h2>
+    <div class="stages" id="stages-list"></div>
+    <div class="log-box" id="log-box"></div>
+    <div class="error-banner" id="error-banner"></div>
+    <button class="btn-retry" id="retry-btn">← Try Again</button>
+  </div>
+</div>
+
+<!-- Report screen -->
+<div id="screen-report" class="screen">
+  <div class="report-bar">
+    <button class="btn-back" id="back-btn">← New Analysis</button>
+    <span class="report-city-label" id="report-city-label"></span>
+    <a class="btn-download" id="download-btn" download="foe-report.html">Download Report</a>
+  </div>
+  <iframe id="report-iframe" sandbox="allow-scripts" title="FoE Report"></iframe>
+</div>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.js"></script>
+<script>
+// ---- Config ----
+const STAGES = [
+  { id: 'extract',     label: 'Extract city entities' },
+  { id: 'abilities',   label: 'Classify abilities' },
+  { id: 'boosts',      label: 'Process boost hints' },
+  { id: 'rankings',    label: 'Rank buildings' },
+  { id: 'report',      label: 'Generate report data' },
+  { id: 'my_city',     label: 'Audit your city' },
+  { id: 'html_report', label: 'Build HTML report' },
+];
+
+const PY_FILES = [
+  'config.py',
+  'core/__init__.py',
+  'core/extract.py',
+  'core/abilities.py',
+  'core/boosts.py',
+  'core/rankings.py',
+  'core/report.py',
+  'core/html_report.py',
+  'core/my_city.py',
+  'core/io_utils.py',
+  'core/city.py',
+  'core/scoring.py',
+  'core/roads.py',
+];
+
+// ---- State ----
+let pyodide = null;
+let engineReady = false;
+let selectedFile = null;
+
+// ---- DOM ----
+const el = (id) => document.getElementById(id);
+
+function showScreen(id) {
+  ['screen-upload', 'screen-progress', 'screen-report'].forEach(s => {
+    const node = el(s);
+    node.classList.toggle('active', s === id);
+  });
+}
+
+function appendLog(text) {
+  const box = el('log-box');
+  box.textContent += text;
+  box.scrollTop = box.scrollHeight;
+}
+
+function setEngineStatus(text, state /* 'loading' | 'ready' | 'error' */) {
+  const div = el('engine-status');
+  el('status-text').textContent = text;
+  div.className = 'engine-status' + (state !== 'loading' ? ' ' + state : '');
+}
+
+// ---- Stage UI ----
+function buildStagesList() {
+  el('stages-list').innerHTML = STAGES.map(s =>
+    `<div class="stage-item" id="stage-${s.id}">
+       <span class="stage-icon">○</span>
+       <span>${s.label}</span>
+     </div>`
+  ).join('');
+}
+
+function setStageActive(id) {
+  const node = el(`stage-${id}`);
+  if (!node) return;
+  node.classList.add('active');
+  node.querySelector('.stage-icon').textContent = '▶';
+}
+
+function setStagesDone(throughId) {
+  let done = false;
+  for (const s of STAGES) {
+    if (done) break;
+    const node = el(`stage-${s.id}`);
+    if (node) {
+      node.classList.remove('active');
+      node.classList.add('done');
+      node.querySelector('.stage-icon').textContent = '✓';
+    }
+    if (s.id === throughId) done = true;
+  }
+}
+
+// ---- Pyodide init ----
+async function initPyodide() {
+  try {
+    setEngineStatus('Loading Python engine (first visit ~10 MB, then cached)…', 'loading');
+
+    pyodide = await loadPyodide();
+
+    setEngineStatus('Setting up pipeline…', 'loading');
+
+    // Expose log bridge to Python
+    window._pyLog = (text) => appendLog(text);
+
+    // Redirect Python stdout/stderr to the log panel
+    await pyodide.runPythonAsync(`
+import sys, io, js
+
+class _Bridge(io.TextIOBase):
+    def write(self, text):
+        js._pyLog(text)
+        return len(text)
+    def flush(self): pass
+
+sys.stdout = _Bridge()
+sys.stderr = _Bridge()
+sys.path.insert(0, '/app')
+`);
+
+    // Set up virtual filesystem
+    pyodide.FS.mkdirTree('/app/core');
+    pyodide.FS.mkdirTree('/app/data/input');
+    pyodide.FS.mkdirTree('/app/data/output');
+
+    // Fetch Python source files in parallel
+    await Promise.all(PY_FILES.map(async (f) => {
+      const resp = await fetch(f);
+      if (!resp.ok) throw new Error(`Could not load ${f} (${resp.status})`);
+      const text = await resp.text();
+      pyodide.FS.writeFile('/app/' + f, text);
+    }));
+
+    // Fetch shared game reference data
+    setEngineStatus('Fetching game reference data (5 MB)…', 'loading');
+    const ebResp = await fetch('Data/Input/enriched_buildings.json');
+    if (!ebResp.ok) throw new Error(`Could not load enriched_buildings.json (${ebResp.status})`);
+    const ebBuf = await ebResp.arrayBuffer();
+    pyodide.FS.writeFile('/app/data/input/enriched_buildings.json', new Uint8Array(ebBuf));
+
+    engineReady = true;
+    setEngineStatus('Ready — select your city export to begin.', 'ready');
+    if (selectedFile) el('analyze-btn').disabled = false;
+
+  } catch (err) {
+    setEngineStatus(`Engine error: ${err.message}`, 'error');
+    console.error(err);
+  }
+}
+
+// ---- File selection ----
+el('file-input').addEventListener('change', (e) => {
+  if (e.target.files[0]) selectFile(e.target.files[0]);
+});
+
+el('clear-btn').addEventListener('click', () => {
+  selectedFile = null;
+  el('file-input').value = '';
+  el('file-selected').style.display = 'none';
+  el('drop-zone').style.display = '';
+  el('analyze-btn').disabled = true;
+});
+
+const dropZone = el('drop-zone');
+dropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.json')) selectFile(file);
+});
+
+function selectFile(file) {
+  selectedFile = file;
+  el('file-name').textContent = file.name;
+  el('file-selected').style.display = 'flex';
+  el('drop-zone').style.display = 'none';
+  el('analyze-btn').disabled = !engineReady;
+}
+
+// ---- Run analysis ----
+el('analyze-btn').addEventListener('click', () => {
+  if (selectedFile && engineReady) runAnalysis(selectedFile);
+});
+
+el('retry-btn').addEventListener('click', () => {
+  showScreen('screen-upload');
+});
+
+el('back-btn').addEventListener('click', () => {
+  showScreen('screen-upload');
+});
+
+async function runAnalysis(file) {
+  // Derive city name the same way the pipeline does
+  const cityName = file.name
+    .replace(/^Full/, '')
+    .replace(/_Export.*$/i, '') || 'CITY';
+
+  showScreen('screen-progress');
+  buildStagesList();
+  el('log-box').textContent = '';
+  el('error-banner').style.display = 'none';
+  el('error-banner').textContent = '';
+  el('retry-btn').style.display = 'none';
+  el('progress-city-name').textContent = cityName;
+
+  try {
+    // Write city export to virtual FS
+    appendLog(`Reading ${file.name} (${(file.size / 1e6).toFixed(1)} MB)…\n`);
+    const buf = await file.arrayBuffer();
+    pyodide.FS.writeFile('/app/data/input/' + file.name, new Uint8Array(buf));
+
+    // Configure pipeline (sets all output paths)
+    pyodide.globals.set('_input_file', file.name);
+    await pyodide.runPythonAsync(`
+import config
+config.configure(_input_file)
+`);
+
+    // Run each stage in sequence
+    for (const stage of STAGES) {
+      setStageActive(stage.id);
+      await pyodide.runPythonAsync(`
+import importlib as _il
+_m = _il.import_module('core.${stage.id}')
+_m.run()
+`);
+      setStagesDone(stage.id);
+    }
+
+    // Read generated report from virtual FS
+    const reportHtml = await pyodide.runPythonAsync(`
+with open(str(config.OUTPUT_DIR / 'report.html'), encoding='utf-8') as _f:
+    _f.read()
+`);
+
+    showReport(reportHtml, cityName);
+
+  } catch (err) {
+    const msg = err.message || String(err);
+    el('error-banner').textContent = 'Error: ' + msg;
+    el('error-banner').style.display = 'block';
+    el('retry-btn').style.display = 'block';
+    appendLog('\n[ERROR] ' + msg + '\n');
+    console.error(err);
+  }
+}
+
+function showReport(html, cityName) {
+  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+
+  el('report-iframe').src = url;
+  el('report-city-label').textContent = cityName;
+  el('download-btn').href = url;
+  el('download-btn').download = `foe-report-${cityName}.html`;
+
+  showScreen('screen-report');
+}
+
+// ---- Boot ----
+initPyodide();
+</script>
+</body>
+</html>

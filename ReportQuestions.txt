@@ -1,0 +1,7 @@
+1.  What are the values used in calculating things like Eff/Tile, Daily Val, Att/Tile, Def/Tile?
+
+2.  How did you arrive at those multipliers?  Are there established values that can be used to emphasize ATT/DEF/FP income/or whatever else?
+
+3.  In FoE Helper the "Buildings Efficiency Rating" Dialog allows the user to assign multipliers for every category.  Should those multipliers be made available to the user here in something like a slider? So they can set those multipliers themselves?
+
+4.  
