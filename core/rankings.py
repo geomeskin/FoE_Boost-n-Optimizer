@@ -8,6 +8,10 @@ from .io_utils import load_json, save_json
 
 MODES = ["balanced", "GBG", "GE", "QI"]
 
+# Happiness-only building types — their "value" is raw happiness points which
+# aren't comparable to production output, so they're excluded from rankings.
+EXCLUDE_TYPES = {"decoration", "culture", "tower"}
+
 # Per-mode weights applied to each boost type's max per_tile value.
 # Scale is chosen so that strong combat buildings shift rank meaningfully
 # relative to base efficiency (value/area), which ranges from ~1 to ~4000.
@@ -106,6 +110,8 @@ def rank_buildings(buildings):
 
     for b in buildings:
         if b.get("value", 0) <= 0:
+            continue
+        if b.get("type") in EXCLUDE_TYPES:
             continue
         area = max(1, b["width"] * b["height"])
         efficiency = round(b["value"] / area, 4)
