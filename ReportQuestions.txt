@@ -1,7 +1,53 @@
-1.  What are the values used in calculating things like Eff/Tile, Daily Val, Att/Tile, Def/Tile?
 
-2.  How did you arrive at those multipliers?  Are there established values that can be used to emphasize ATT/DEF/FP income/or whatever else?
+Settings >> Other (tab) >> Import/Export (Menu Item) >> Open Import/Export Tool >> Scroll to bottom Export Data (button)
 
-3.  In FoE Helper the "Buildings Efficiency Rating" Dialog allows the user to assign multipliers for every category.  Should those multipliers be made available to the user here in something like a slider? So they can set those multipliers themselves?
+Open the "Town Overview" dialog (displays the schematics of your city) >> Top Right corner click "Copy city data"
+on your hard drive create an empty TEXT file and name it whatever you like but give it a '.json' extension.
 
-4.  
+After you've clicked the 'copy city data' button open the new text file and PASTE from the clipboard to the file, and SAVE.
+
+Then you can use the tool.
+
+The Foe Boost-n-Optimizer tool.
+
+It's a free browser tool that ranks every building in FoE by value per tile, across all four game modes (Balanced, GBG, GE, QI) — S/A/B/C tiers. You upload your own city export and it'll show you exactly which of your placed buildings are worth keeping and which are swap candidates.
+
+Runs entirely in your browser. Nothing gets uploaded anywhere.
+
+Only requirement is FoE Helper (to export your city).
+
+Take a look and let me know what you think:
+geomeskin.github.io/FoE_Boost-n-Optimizer/
+
+Happy to answer questions. If you think it's worth sharing with the guild, I'll write something up.
+
+
+========================================
+
+Ladies,
+
+Recently I showed you a tool I created in hopes it would be helpful for FoE players.  I've created a new one that I think is better.  I want to show you first and if you think it's worth doing, show it to the guild.  You need to be an FoE Helper user to get the info the tool needs.  
+
+To do that: (in FoE Helper)..
+
+Open the "Town Overview" dialog (displays the schematics of your city) >> Top Right corner click "Copy city data"
+on your hard drive create an empty TEXT file and name it whatever you like but give it a '.json' extension.
+
+After you've clicked the 'copy city data' button open the new text file and PASTE from the clipboard to the file, and SAVE.
+
+Then you can use the tool.
+
+The Foe Boost-n-Optimizer tool.
+
+It's a free browser tool that ranks every building in FoE by value per tile, across all four game modes (Balanced, GBG, GE, QI) — S/A/B/C tiers. You upload your own city export and it'll show you exactly which of your placed buildings are worth keeping and which are swap candidates.
+
+Runs entirely in your browser. Nothing gets uploaded anywhere.
+
+Only requirement is FoE Helper (to export your city).
+
+Take a look and let me know what you think:
+geomeskin.github.io/FoE_Boost-n-Optimizer/
+
+Open that URL and load up your new JSON file.
+
+Happy to answer questions. If you think it's worth sharing with the guild, I'll write something up.
