@@ -10,7 +10,9 @@ MODES = ["balanced", "GBG", "GE", "QI"]
 
 # Happiness-only building types — their "value" is raw happiness points which
 # aren't comparable to production output, so they're excluded from rankings.
-EXCLUDE_TYPES = {"decoration", "culture", "tower"}
+# Towers are NOT excluded here: combat towers (Ritual Flames etc.) have att/def
+# boost data and a real per-tile value even with zero production.
+EXCLUDE_TYPES = {"decoration", "culture"}
 
 # Per-mode weights applied to each boost type's max per_tile value.
 # Scale is chosen so that strong combat buildings shift rank meaningfully
@@ -109,9 +111,10 @@ def rank_buildings(buildings):
     scored = []
 
     for b in buildings:
-        if b.get("value", 0) <= 0:
-            continue
         if b.get("type") in EXCLUDE_TYPES:
+            continue
+        # Allow zero-production buildings only if they have att/def boost data
+        if b.get("value", 0) <= 0 and b["id"] not in boost_index:
             continue
         area = max(1, b["width"] * b["height"])
         efficiency = round(b["value"] / area, 4)
