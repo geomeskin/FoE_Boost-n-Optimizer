@@ -55,6 +55,17 @@ def _tier_from_efficiency(eff, cuts):
     return "C"
 
 
+def _entity_dimensions(ent):
+    """Return (width, height) from entity data, trying both storage locations."""
+    w = ent.get("width")
+    h = ent.get("length")
+    if w and h:
+        return int(w), int(h)
+    # Event buildings store size in components.AllAge.placement.size.{x,y}
+    size = ent.get("components", {}).get("AllAge", {}).get("placement", {}).get("size", {})
+    return int(size.get("x", 1)), int(size.get("y", 1))
+
+
 def _att_per_tile(boost):
     return max(
         boost.get("att_boost_attacker",     0),
@@ -76,27 +87,50 @@ def _def_per_tile(boost):
 def _score_from_state(placed, ent):
     """
     Compute efficiency from live production snapshot.
+    Handles two export structures:
+      - state.current_product.product.resources  (standard buildings)
+      - state.productionOption.products           (event buildings)
     Returns (efficiency, daily_value, resource_summary) or None if no state data.
     """
-    state    = placed.get("state", {})
-    prod     = state.get("current_product", {})
+    state = placed.get("state", {})
+
+    # Path 1: standard buildings
+    prod      = state.get("current_product", {})
     resources = prod.get("product", {}).get("resources", {})
-    if not resources:
-        return None
+    if resources:
+        prod_time        = max(1, prod.get("production_time", 86400))
+        daily_multiplier = 86400 / prod_time
+        daily_value = sum(
+            amount * daily_multiplier * RESOURCE_WEIGHTS.get(res, GOODS_WEIGHT)
+            for res, amount in resources.items()
+        )
+        w, h = _entity_dimensions(ent)
+        area = max(1, w * h)
+        res_summary = {r: round(v * daily_multiplier, 1) for r, v in resources.items()}
+        return round(daily_value / area, 4), round(daily_value, 2), res_summary
 
-    prod_time        = max(1, prod.get("production_time", 86400))
-    daily_multiplier = 86400 / prod_time
+    # Path 2: event buildings — production defined by productionOption
+    prod_option = state.get("productionOption", {})
+    if prod_option:
+        prod_time        = max(1, prod_option.get("time", 86400))
+        daily_multiplier = 86400 / prod_time
+        resources = {}
+        for p in prod_option.get("products", []):
+            # Only count guaranteed player resources; skip guild rewards and random bonuses
+            if p.get("type") == "resources" and not p.get("isRandom", False):
+                for res, amount in p.get("playerResources", {}).get("resources", {}).items():
+                    resources[res] = resources.get(res, 0) + amount
+        if resources:
+            daily_value = sum(
+                amount * daily_multiplier * RESOURCE_WEIGHTS.get(res, GOODS_WEIGHT)
+                for res, amount in resources.items()
+            )
+            w, h = _entity_dimensions(ent)
+            area = max(1, w * h)
+            res_summary = {r: round(v * daily_multiplier, 1) for r, v in resources.items()}
+            return round(daily_value / area, 4), round(daily_value, 2), res_summary
 
-    daily_value = 0.0
-    for res, amount in resources.items():
-        weight = RESOURCE_WEIGHTS.get(res, GOODS_WEIGHT)
-        daily_value += amount * daily_multiplier * weight
-
-    area = max(1, ent.get("width", 1) * ent.get("length", 1))
-    efficiency = round(daily_value / area, 4)
-
-    res_summary = {r: round(v * daily_multiplier, 1) for r, v in resources.items()}
-    return efficiency, round(daily_value, 2), res_summary
+    return None
 
 
 def extract_my_buildings(export, tier_index, cuts):
@@ -114,14 +148,15 @@ def extract_my_buildings(export, tier_index, cuts):
         ent    = city_entities.get(eid, {})
         ranked = tier_index.get(eid)
 
+        w, h = _entity_dimensions(ent)
         base = {
             "placement_id": placement_id,
             "id":           eid,
             "name":         ent.get("name", eid),
             "type":         placed["type"],
-            "width":        ent.get("width",  1),
-            "height":       ent.get("length", 1),
-            "area":         max(1, ent.get("width", 1) * ent.get("length", 1)),
+            "width":        w,
+            "height":       h,
+            "area":         max(1, w * h),
             "current_x":    placed.get("x", 0),
             "current_y":    placed.get("y", 0),
             "connected":    placed.get("connected", 0),
