@@ -7,6 +7,7 @@
 import json
 import glob
 from datetime import datetime
+from pathlib import Path
 
 SEP_WIDE  = "=" * 64
 SEP_THIN  = "-" * 64
@@ -17,6 +18,8 @@ def _detect_cities():
     seen = set()
     cities = []
     for folder in sorted(glob.glob("data/output/*_*")):
+        if not Path(folder).is_dir():
+            continue
         name = Path(folder).name
         city = name.rsplit("_", 2)[0]   # strip _YYYYMMDD_HHMMSS
         if city and city not in seen:
